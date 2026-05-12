@@ -7,34 +7,31 @@ import java.util.Map;
 import com.alerts.AlertGenerator;
 
 /**
- * Manages storage and retrieval of patient data within a healthcare monitoring
- * system.
- * This class serves as a repository for all patient records, organized by
- * patient IDs.
+ * Manages the centralized storage and historical retrieval of patient health data
+ * within the monitoring system.
+ * This class serves as a repository for all patient records, indexed efficiently
+ * by unique patient identifiers.
  */
 public class DataStorage {
     private Map<Integer, Patient> patientMap; // Stores patient objects indexed by their unique patient ID.
 
     /**
-     * Constructs a new instance of DataStorage, initializing the underlying storage
-     * structure.
+     * Constructs a new instance of {@code DataStorage}, initializing the underlying
+     * map repository structure.
      */
     public DataStorage() {
         this.patientMap = new HashMap<>();
     }
 
     /**
-     * Adds or updates patient data in the storage.
-     * If the patient does not exist, a new Patient object is created and added to
-     * the storage.
-     * Otherwise, the new data is added to the existing patient's records.
+     * Adds or updates recorded patient health data within the storage system.
+     * If the specified patient does not exist, a new {@link Patient} object is instantiated
+     * and added to the repository; otherwise, the data is appended to the existing patient's log.
      *
-     * @param patientId        the unique identifier of the patient
-     * @param measurementValue the value of the health metric being recorded
-     * @param recordType       the type of record, e.g., "HeartRate",
-     *                         "BloodPressure"
-     * @param timestamp        the time at which the measurement was taken, in
-     *                         milliseconds since the Unix epoch
+     * @param patientId        the unique identifier of the target patient
+     * @param measurementValue the numerical value of the health metric being recorded
+     * @param recordType       the type of record category (e.g., "HeartRate", "SpO2")
+     * @param timestamp        the time at which the measurement was taken, in milliseconds since the Unix epoch
      */
     public void addPatientData(int patientId, double measurementValue, String recordType, long timestamp) {
         Patient patient = patientMap.get(patientId);
@@ -46,17 +43,13 @@ public class DataStorage {
     }
 
     /**
-     * Retrieves a list of PatientRecord objects for a specific patient, filtered by
-     * a time range.
+     * Retrieves a chronological list of {@link PatientRecord} objects for a specific patient,
+     * filtered strictly by a provided time range.
      *
-     * @param patientId the unique identifier of the patient whose records are to be
-     *                  retrieved
-     * @param startTime the start of the time range, in milliseconds since the Unix
-     *                  epoch
-     * @param endTime   the end of the time range, in milliseconds since the Unix
-     *                  epoch
-     * @return a list of PatientRecord objects that fall within the specified time
-     *         range
+     * @param patientId the unique identifier of the patient whose records are to be retrieved
+     * @param startTime the start boundary of the time range, in milliseconds since the Unix epoch
+     * @param endTime   the end boundary of the time range, in milliseconds since the Unix epoch
+     * @return a list of PatientRecord objects falling within the time window; returns an empty list if none match
      */
     public List<PatientRecord> getRecords(int patientId, long startTime, long endTime) {
         Patient patient = patientMap.get(patientId);
@@ -67,29 +60,21 @@ public class DataStorage {
     }
 
     /**
-     * Retrieves a collection of all patients stored in the data storage.
+     * Retrieves a comprehensive collection containing all patient instances stored in the database.
      *
-     * @return a list of all patients
+     * @return a lists containing all tracked {@link Patient} objects
      */
     public List<Patient> getAllPatients() {
         return new ArrayList<>(patientMap.values());
     }
 
     /**
-     * The main method for the DataStorage class.
-     * Initializes the system, reads data into storage, and continuously monitors
-     * and evaluates patient data.
-     * 
-     * @param args command line arguments
+     * The main entry point for the DataStorage application module.
+     * Initializes the core database system, loads data streams, and evaluates records against active conditions.
+     * * @param args execution arguments passed via the command line interface
      */
     public static void main(String[] args) {
-        // DataReader is not defined in this scope, should be initialized appropriately.
-        // DataReader reader = new SomeDataReaderImplementation("path/to/data");
         DataStorage storage = new DataStorage();
-
-        // Assuming the reader has been properly initialized and can read data into the
-        // storage
-        // reader.readData(storage);
 
         // Example of using DataStorage to retrieve and print records for a patient
         List<PatientRecord> records = storage.getRecords(1, 1700000000000L, 1800000000000L);

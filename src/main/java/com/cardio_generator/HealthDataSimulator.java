@@ -5,7 +5,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.cardio_generator.generators.AlertGenerator;
-
 import com.cardio_generator.generators.BloodPressureDataGenerator;
 import com.cardio_generator.generators.BloodSaturationDataGenerator;
 import com.cardio_generator.generators.BloodLevelsDataGenerator;
@@ -25,6 +24,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+/**
+ * The {@code HealthDataSimulator} class is the main entry point for the simulation system.
+ * It coordinates the generation of continuous synthetic health metrics (such as ECG, Blood Pressure,
+ * Blood Saturation, and Alerts) for multiple patients and channels the telemetry stream
+ * to predefined outputs (Console, Files, TCP sockets, or WebSockets).
+ */
 public class HealthDataSimulator {
 
     private static int patientCount = 50; // Default number of patients
@@ -32,6 +37,13 @@ public class HealthDataSimulator {
     private static OutputStrategy outputStrategy = new ConsoleOutputStrategy(); // Default output strategy
     private static final Random random = new Random();
 
+    /**
+     * The main application driver method. Initializes the scheduler thread pool,
+     * sets up tracking list for patients, and maps their recurring tasks.
+     *
+     * @param args        command line configuration parameters passed to configure the execution
+     * @throws IOException if there is an error setting up specified output resource directories
+     */
     public static void main(String[] args) throws IOException {
 
         parseArguments(args);
@@ -44,6 +56,13 @@ public class HealthDataSimulator {
         scheduleTasksForPatients(patientIds);
     }
 
+    /**
+     * Parses the CLI command line arguments to dynamically configure simulator flags
+     * such as the total client scope and active transmission strategies.
+     *
+     * @param args        the original argument array collected from entry parameters
+     * @throws IOException if the program encounters write-permission issues creating directories
+     */
     private static void parseArguments(String[] args) throws IOException {
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -105,6 +124,10 @@ public class HealthDataSimulator {
         }
     }
 
+    /**
+     * Prints helpful usage details and instructions out to standard system console
+     * when requested via parameters or error triggers.
+     */
     private static void printHelp() {
         System.out.println("Usage: java HealthDataSimulator [options]");
         System.out.println("Options:");
@@ -122,6 +145,12 @@ public class HealthDataSimulator {
                 "  This command simulates data for 100 patients and sends the output to WebSocket clients connected to port 8080.");
     }
 
+    /**
+     * Dynamically instantiates a sequential tracking index collection of numerical target identity bounds.
+     *
+     * @param patientCount the aggregate value ceiling for index creation
+     * @return             a comprehensive collection of incremental identifier integers
+     */
     private static List<Integer> initializePatientIds(int patientCount) {
         List<Integer> patientIds = new ArrayList<>();
         for (int i = 1; i <= patientCount; i++) {
@@ -130,6 +159,12 @@ public class HealthDataSimulator {
         return patientIds;
     }
 
+    /**
+     * Orchestrates core mapping processes by distributing signal generator objects
+     * across different multi-rate background timing threads.
+     *
+     * @param patientIds a generic index collection mapping target entities to register recurring loop threads
+     */
     private static void scheduleTasksForPatients(List<Integer> patientIds) {
         ECGDataGenerator ecgDataGenerator = new ECGDataGenerator(patientCount);
         BloodSaturationDataGenerator bloodSaturationDataGenerator = new BloodSaturationDataGenerator(patientCount);
@@ -146,6 +181,13 @@ public class HealthDataSimulator {
         }
     }
 
+    /**
+     * Enqueues an execution packet inside the background pool manager with randomized starting delays.
+     *
+     * @param task     the abstract processing routine to execution chronologically
+     * @param period   the persistent timing parameter gap length defining continuous generation intervals
+     * @param timeUnit the scale standard specifying duration calculations (e.g., Seconds, Minutes)
+     */
     private static void scheduleTask(Runnable task, long period, TimeUnit timeUnit) {
         scheduler.scheduleAtFixedRate(task, random.nextInt(5), period, timeUnit);
     }
