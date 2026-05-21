@@ -4,10 +4,15 @@ import java.io.IOException;
 
 public interface DataReader {
     /**
-     * Reads data from a specified source and stores it in the data storage.
-     * 
-     * @param dataStorage the storage where data will be stored
-     * @throws IOException if there is an error reading the data
+     * Reads batch data from a specified source (legacy file support).
      */
     void readData(DataStorage dataStorage) throws IOException;
+
+    /**
+     * Connects to a real-time stream source via network configuration.
+     * * @param serverUrl the network URI or host address to connect to
+     * @param dataStorage the storage where streaming data will be inserted
+     * @throws IOException if connection configuration fails
+     */
+    void connectToStream(String serverUrl, DataStorage dataStorage) throws IOException;
 }

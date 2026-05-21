@@ -31,7 +31,7 @@ public class AlertGenerator {
     }
 
     public void triggerAlert(Alert alert) {
-        System.out.println("🚨 [ALERT] Patient ID: " + alert.getPatientId()
+        System.out.println(" [ALERT] Patient ID: " + alert.getPatientId()
                 + " | Condition: " + alert.getCondition());
     }
 }
