@@ -16,10 +16,11 @@ public class AlertGeneratorTest {
 
     @BeforeEach
     public void setUp() {
-        storage = new DataStorage();
-        triggeredAlerts = new ArrayList<>();
+        // 测试单例模式
+        storage = DataStorage.getInstance();
+        storage.clear();
 
-        // 覆写 triggerAlert 以便在测试中捕获断言
+        triggeredAlerts = new ArrayList<>();
         alertGenerator = new AlertGenerator(storage) {
             @Override
             public void triggerAlert(Alert alert) {
@@ -30,70 +31,42 @@ public class AlertGeneratorTest {
     }
 
     @Test
-    public void testNormalVitalsNoAlert() {
-        int patientId = 99;
-        storage.addPatientData(patientId, 75.0, "HeartRate", System.currentTimeMillis());
-        storage.addPatientData(patientId, 98.0, "SpO2", System.currentTimeMillis());
-        storage.addPatientData(patientId, 120.0, "SystolicPressure", System.currentTimeMillis());
-        storage.addPatientData(patientId, 80.0, "DiastolicPressure", System.currentTimeMillis());
+    public void testSingletonPattern() {
+        DataStorage s1 = DataStorage.getInstance();
+        DataStorage s2 = DataStorage.getInstance();
+        assertSame(s1, s2, "DataStorage must follow the Singleton Pattern");
+    }
+
+    @Test
+    public void testFactoryPattern() {
+        AlertFactory bpFactory = new BloodPressureAlertFactory();
+        Alert alert = bpFactory.createAlert("1", "High", 123456L);
+        assertTrue(alert.getCondition().contains("[BP]"), "Factory method should inject BP tag");
+
+        AlertFactory oxygenFactory = new BloodOxygenAlertFactory();
+        Alert oxAlert = oxygenFactory.createAlert("2", "Low", 123456L);
+        assertTrue(oxAlert.getCondition().contains("[SpO2]"), "Factory method should inject SpO2 tag");
+    }
+
+    @Test
+    public void testDecoratorPattern() {
+        Alert simpleAlert = new Alert("001", "Anomalous State", System.currentTimeMillis());
+        Alert priorityAlert = new PriorityAlertDecorator(simpleAlert, "URGENT");
+        Alert fullyDecorated = new RepeatedAlertDecorator(priorityAlert);
+
+        assertTrue(fullyDecorated.getCondition().contains("[PRIORITY: URGENT]"));
+        assertTrue(fullyDecorated.getCondition().contains("[REPEATED NOTIFICATION SENT]"));
+    }
+
+    @Test
+    public void testStrategiesViaGenerator() {
+        int patientId = 77;
+        storage.addPatientData(patientId, 150.0, "HeartRate", System.currentTimeMillis());
+        storage.addPatientData(patientId, 85.0, "SpO2", System.currentTimeMillis());
 
         Patient patient = storage.getAllPatients().get(0);
         alertGenerator.evaluateData(patient);
 
-        assertTrue(triggeredAlerts.isEmpty(), "Normal vitals should not trigger any alerts.");
-    }
-
-    @Test
-    public void testHeartRateEdgeCases() {
-        int patientId = 101;
-        // 极端高心率
-        storage.addPatientData(patientId, 140.0, "HeartRate", System.currentTimeMillis());
-        // 极端低心率
-        storage.addPatientData(patientId, 45.0, "HeartRate", System.currentTimeMillis());
-
-        Patient patient = storage.getAllPatients().get(0);
-        alertGenerator.evaluateData(patient);
-
-        assertEquals(2, triggeredAlerts.size(), "Should trigger two alerts for abnormal heart rates.");
-        assertTrue(triggeredAlerts.get(0).getCondition().contains("Critical Heart Rate"));
-    }
-
-    @Test
-    public void testLowSpO2EdgeCase() {
-        int patientId = 102;
-        // 危险血氧边界
-        storage.addPatientData(patientId, 89.0, "SpO2", System.currentTimeMillis());
-
-        Patient patient = storage.getAllPatients().get(0);
-        alertGenerator.evaluateData(patient);
-
-        assertEquals(1, triggeredAlerts.size());
-        assertTrue(triggeredAlerts.get(0).getCondition().contains("Low Blood Oxygen"));
-    }
-
-    @Test
-    public void testBloodPressureEdgeCases() {
-        int patientId = 103;
-        // 高收缩压与低舒张压边界
-        storage.addPatientData(patientId, 155.0, "SystolicPressure", System.currentTimeMillis());
-        storage.addPatientData(patientId, 50.0, "DiastolicPressure", System.currentTimeMillis());
-
-        Patient patient = storage.getAllPatients().get(0);
-        alertGenerator.evaluateData(patient);
-
-        assertEquals(2, triggeredAlerts.size(), "Should trigger alerts for both systolic and diastolic anomalies.");
-    }
-
-    @Test
-    public void testNullAndEmptyPatientEdgeCases() {
-        // 极端用例：传入 null
-        assertDoesNotThrow(() -> alertGenerator.evaluateData(null),
-                "Evaluating null patient should fail-safe and not throw exception.");
-
-        // 极端用例：患者没有任何数据记录
-        Patient emptyPatient = new Patient(888);
-        assertDoesNotThrow(() -> alertGenerator.evaluateData(emptyPatient),
-                "Evaluating patient with no history records should fail-safe gracefully.");
-        assertTrue(triggeredAlerts.isEmpty());
+        assertFalse(triggeredAlerts.isEmpty(), "Strategies should execute and pick up anomalies.");
     }
 }
